@@ -102,7 +102,7 @@ ice_25_01_gb |>
 
 ### Existen dos bloques de competitividad estatal
 
-Aun cuando el diseño del Índice describe seis niveles de competitividad, un análisis de los patrones de desempeño general de los 32 estados revela una división clara del país en dos grandes bloques, aquellos estados que concentran mejores condiciones de competitividad (competitividad alta) y las entidades que enfrentan dificultades generalizadas para la competitividad (competitividad baja).
+Aun cuando el diseño del Índice describe seis niveles de competitividad, un análisis de los patrones de desempeño general de los 32 estados revela una división clara del país en dos grandes bloques generales, aquellos estados que concentran mejores condiciones de competitividad (competitividad alta) y las entidades que enfrentan dificultades generalizadas para la competitividad (competitividad baja).
 
 ```{r}
 #| label: gráfica umap
@@ -145,7 +145,7 @@ res_umap |>
   theme(legend.position = "top") 
 ```
 
-Hay estados a los que el ICE 2025 clasifica como de competitividad media alta, tales como Guanajuato o Hidalgo, que se ubican, por su desempeño general, en el bloque de los estados de competitividad baja. En el mismo sentido, hay estados a los que el ICE 2025 clasifica como de competitividad media baja, tales como Quintana Roo o Colima, que alcanzan, igualmente por su desempeño general, a integrarse al bloque de estados de competitividad alta.
+Hay estados a los que el ICE 2025 clasifica como de competitividad media alta, tales como Guanajuato o Hidalgo, que se ubican, por su desempeño general, en el bloque de los estados de competitividad baja. En el mismo sentido, hay estados a los que el ICE 2025 clasifica como de competitividad media baja, tales como Quintana Roo o Colima, que alcanzan, igualmente por su desempeño general, a integrarse al bloque de estados de competitividad alta. Esto habla de la complejidad fundamental que entraña la medición del desempeño de los estados.
 
 ## Condiciones Más Relevantes para la Competitividad
 
@@ -170,9 +170,6 @@ lay <-
     net_25_tbl,
     layout = "sugiyama",
     weights = abs(E(net_25_tbl)$r),
-    # niter = 2000,                          # más iteraciones
-    # area  = vcount(net_tbl)^2 * 1.2,       # espacio proporcional
-    # repulserad  = vcount(net_tbl)^2 * 3          # radio de repulsión
   )
 
 
