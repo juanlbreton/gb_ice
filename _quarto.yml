@@ -1,0 +1,30 @@
+project:
+  type: website
+  output-dir: docs
+
+website:
+  title: "El Gran Bajío en el ICE 2025"
+  favicon: images/fabi_jlbe_eva.jpeg
+  navbar:
+    left:
+      - href: index.qmd
+        text: Inicio
+      - href: about.qmd
+        text: Acerca de
+
+format:
+  html:
+    theme: 
+      cosmo
+    lang: es
+    css: styles.css
+    toc: true
+    code-block-border-left: "darkorange"
+    code-block-bg: true
+    fig-align: left
+    
+execute:
+  echo: false
+  warning: false
+  message: false
+  

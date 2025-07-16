@@ -1,0 +1,852 @@
+---
+title: "Los Estados del Gran Bajío"
+subtitle: "En el Índice de Competitividad Estatal 2025 del IMCO"
+author: "Juan L. Bretón, PMP"
+date: "15 julio, 2025"
+favicon: images/fabi_jlbe_eva.jpeg
+---
+
+## El Índice de Competitividad Estatal
+
+```{r}
+#| label: carga de paquetes
+
+library(tidyverse)
+library(styleBreton)
+library(uwot)
+library(dbscan)
+library(cluster)
+library(ggrepel)
+library(ggraph)
+library(tidygraph)
+library(igraph)
+library(gt)
+```
+
+El Índice de Competitividad Estatal (ICE) es un ejercicio que tiene por objeto el ofrecer información para diseñar, priorizar y dar seguimiento a aquellas políticas públicas que promuevan la competitividad de los estados de México. Es elaborado por el Instituto Mexicano para la Competitividad (IMCO) y se publica anualmente.
+
+La competitividad es definida, dentro del contexto del ICE, como la capacidad de las ciudades, estados o países de generar, atraer y retener tanto talento como inversión. En términos generales, los estados son más capaces de atraer talento e inversión en la medida en la que observan niveles altos de productividad en las empresas y en las personas y, en consecuencia, se encuentran en mejor posibilidad de acceder a perspectivas superiores de prosperidad y de bienestar para su población.
+
+::: column-margin
+El IMCO es un centro de investigación en políticas públicas orientado a transformar la vida de las personas y promover el libre ejercicio de sus derechos.
+:::
+
+### Medición de la competitividad
+
+La edición 2025 del índice identifica seis subíndices asociados con las condiciones que favorecen la competitividad de los estados. Estos subíndices son Innovación y Economía, Infreaestructura, Mercado de Trabajo, Sociedad y Medio Ambiente, Derecho y Sistema Político y Gobiernos.
+
+Los subíndices agrupan, a su vez, 53 indicadores que se ponderan para ofrecer un diagnóstico estructural de las condiciones de competitividad de cada entidad federativa; dicho diagnóstico es caracetrizado en uno de los seis niveles de competitividad que el ICE describe, a saber: Muy Alta, Alta, Media Alta, Media Baja, Baja y Muy Baja.
+
+Tanto el índice como cada uno de los subíndices utilizan mediciones estandarizadas que permiten no sólo identificar las fortalezas y las debilidades estructurales de cada estado del país, sino, en el mismo sentido, realizar comparaciones directas entre éstos.
+
+### El ICE y el Gran Bajío
+
+El Índice de Competitividad Estatal es una herramienta clave para el Gran Bajío porque permite ubicar con precisión las capacidades y limitaciones que definen el entorno en que se desarrolla la actividad económica, social e institucional de la región. Al ofrecer una medición comparativa entre los estados, el ICE facilita la identificación objetiva de ventajas competitivas específicas, tales como innovación, infraestructura, capital humano o eficiencia gubernamental, que pueden ser apalancadas colectivamente. Asimismo, expone brechas estructurales que requerirían, también, atención coordinada.
+
+Para una región como el Gran Bajío, que aspira a consolidarse como un bloque económico articulado y de alto desempeño, el ICE ofrece una base técnica confiable para la toma de decisiones estratégicas de inversión, políticas públicas y colaboración interestatal.
+
+## Resultados de ICE 2025
+
+```{r}
+#| label: carga gb_1
+
+load("data/carga_gb.RData")
+```
+
+De acuerdo con su nivel de competitividad, los estados de la República se ordenan, en la edición 2025 del Índice de Competitividad Estatal del IMCO, de la forma que se muestra en la gráfica siguiente.
+
+::: column-margin
+Los estados del Gran Bajío alcanzaron, en su mayoría, niveles de competitividad media alta; en su caso, Zacatecas y Michoacán alcanzaron niveles media baja y baja, respectivamente.
+:::
+
+```{r}
+#| label: gráfica de posición relativa
+#| fig-width: 9
+#| fig-height: 11
+#| fig-cap: "Ranking de los estados en el Índice de Competitividad Estatal 2025."
+
+# posiciones relativas
+ice_25_01_gb |> 
+  ggplot(aes(x = 1, 
+             y = fct_reorder(entidad, posicion, .desc = TRUE))) +
+  geom_tile(aes(fill = nivel_de_competitividad),
+            width = 0.9, height = 0.5,
+            alpha = 0.75) +
+  geom_label(aes(label = entidad,
+                 # color = gran_bajio,
+                 color = gran_bajio),
+             family = "Encode Sans Condensed",
+             fontface = "bold") +
+  scale_x_continuous(breaks = NULL) +
+  labs(
+    title = "Posición Relativa de los Estados en el ICE 2025",
+    subtitle = paste(
+      "La barra muestra el nivel de competitividad del ICE.",
+      "Se muestra también la membresía al Gran Bajío."
+    ),
+    x = NULL,
+    y = NULL,
+    caption = "Fuente: IMCO, Índice de Competitividad Estatal 2025. <br>
+       Modelado y visualización: Juan L. Bretón, PMP | @jluisbreton"
+  ) +
+  scale_fill_manual(values = color_comp,
+                    name = "Nivel de Competitividad") +
+  scale_color_manual(values = color_gb,
+                     name = "Gran Bajío") +
+  theme_breton() +
+  theme(legend.position = "top",
+        axis.text = element_blank(),
+        axis.ticks = element_blank()) +
+  guides(color = guide_legend(title.vjust = -0.5))
+```
+
+### Existen dos bloques de competitividad estatal
+
+Aun cuando el diseño del Índice describe seis niveles de competitividad, un análisis de los patrones de desempeño general de los 32 estados revela una división clara del país en dos grandes bloques, aquellos estados que concentran mejores condiciones de competitividad (competitividad alta) y las entidades que enfrentan dificultades generalizadas para la competitividad (competitividad baja).
+
+```{r}
+#| label: gráfica umap
+#| fig-height: 7
+#| fig-cap: "Atendiendo al desempeño general, se pueden identificar dos grandes bloques de estados."
+
+# gráfica de grupos de estados
+res_umap |> 
+  as_tibble() |> 
+  mutate(cluster = as_factor(clus_dbscan$cluster),
+         entidad = as_factor(ice_25_01$entidad),
+         nivel = as_factor(ice_25_01$nivel_de_competitividad)) |> 
+  ggplot(aes(x = V1, 
+             y = V2,)) +
+  geom_point(aes(color = nivel,
+                 fill = cluster),
+             shape = 21,
+             alpha = 0.75,
+             size = 3.4,
+             stroke = 1.7) +
+  geom_text_repel(aes(label = entidad,
+                      color = nivel),
+                  size = 3.25,
+                  min.segment.length = 15,
+                  family = "Encode Sans Condensed",
+                  fontface = "bold") +
+  scale_fill_manual(values = c("darkblue", "cyan"),
+                    name = "Cluster") +
+  scale_color_manual(values = color_comp,
+                     name = "Nivel de Competitividad") +
+  labs(title = paste("El país se encuentra dividido en dos grandes bloques"),
+       subtitle = paste("Clusterización a partir de",
+                        "embeddings de dimensiones normalizadas.",
+                        "Se conserva el nivel de competitividad del ICE 2025."),
+       x = "UMAP 1",
+       y = "UMAP 2",
+       caption = "Funte: IMCO. Índice de Competitivad Estatal 2025.
+       <br> Modelado y visualización: Juan L. Bretón, PMP | @juanlbreton") +
+  theme_breton() +
+  theme(legend.position = "top") 
+```
+
+Hay estados a los que el ICE 2025 clasifica como de competitividad media alta, tales como Guanajuato o Hidalgo, que se ubican, por su desempeño general, en el bloque de los estados de competitividad baja. En el mismo sentido, hay estados a los que el ICE 2025 clasifica como de competitividad media baja, tales como Quintana Roo o Colima, que alcanzan, igualmente por su desempeño general, a integrarse al bloque de estados de competitividad alta.
+
+## Condiciones Más Relevantes para la Competitividad
+
+Si bien el diseño del ICE 2025 no establece con puntualidad una distinción en este sentido, es válido cuestionar cuáles serían los indicadores que describen las condiciones más relevantes para la competitividad de los estados.
+
+Un análisis de la asociación entre los indicadores del Índice destaca, precisamente, algunas de las condiciones que tienen mayor influencia en la competitividad de una entidad federativa. Entre éstas se pueden incluir el PIB Per Cápita, la Esperanza de Vida, el Ingreso Promedio de los Trabajadores de Tiempo Completo, la Informalidad Laboral y la Complejidad Económica en Sectores de Innovación.
+
+::: column-margin
+El análisis de las características de la asociación entre variables permite descubrir patrones y conexiones significativas en forma de una red, lo que sirve para identificar las variables que tienen mayor influencia.
+:::
+
+```{r}
+#| label: análisis de red
+#| fig-width: 22
+#| fig-height: 18
+#| fig-cap: "Indicadores del ICE 2025 que resultan más relevantes para la competitivdad de los estados."
+
+
+# Crear el layout con Sugiyama ajustado
+lay <- 
+  create_layout(
+    net_25_tbl,
+    layout = "sugiyama",
+    weights = abs(E(net_25_tbl)$r),
+    # niter = 2000,                          # más iteraciones
+    # area  = vcount(net_tbl)^2 * 1.2,       # espacio proporcional
+    # repulserad  = vcount(net_tbl)^2 * 3          # radio de repulsión
+  )
+
+
+# Plot
+ggraph(lay) +
+  
+  # Aristas
+  geom_edge_arc(aes(
+    alpha = abs(r),
+    width = abs(r),
+    color = sentido
+  ), 
+  strength = 0.3,
+  show.legend = c(edge_alpha = FALSE)) +
+  
+  # Nodos
+  geom_node_point(aes(
+    size = eigenvector, 
+    color = subindice,
+    alpha = betwe
+  )) +
+  
+  # Etiquetas repel
+  geom_node_label(aes(
+    label = name,
+    fontface = "bold"
+  ),
+  family = "Encode Sans Condensed",
+  repel = TRUE,
+  size = 4.85,
+  color = "grey5",
+  vjust = 1.25,
+  force = 4,        # fuerza de separación
+  max.overlaps = 10,
+  seed = 42,
+  alpha = 0.7,
+  label.size = 0.01
+  ) +
+  
+  # Escalas y leyendas
+  scale_edge_color_manual(values = c("negativo" = "#660712", 
+                                     "positivo" = "#035824"),
+                          name   = "Sentido de la asociación",
+                          labels = c("Inversa", "Directa")) +
+  scale_edge_alpha_continuous(range = c(0.25, 0.75)) +
+  scale_edge_width_continuous(range = c(0.3, 2.5)) +
+  
+  scale_color_manual(values = c(
+    "Derecho" = "#8B0000",
+    "Infraestructura" = "#1F77B4",
+    "Innovacion Y Economia" = "#FF7F0E",
+    "Mercado De Trabajo" = "#2CA02C",
+    "Sistema Politico Y Gobiernos" = "#D62728",
+    "Sociedad Y Medio Ambiente" = "#9467BD"
+  ),
+  name = "Subíndice") +
+  
+  scale_size_continuous(range = c(3, 15), 
+                        name = "Centralidad") +
+  
+  scale_alpha_continuous(range = c(0.65, 1),
+                         name = "Intermediación") +
+  
+  # Títulos y tema
+  labs(
+    title = 
+      paste("¿Cuáles son las condiciones más relavantes",
+            "para la competitividad de los estados?"),
+    subtitle = 
+      paste("Asociaciones entre los indicadores del",
+            "Índice de Competitividad Estatal 2025.",
+            ""),
+    caption = "Fuente: IMCO, Índice de Competitividad Estatal 2025.
+    <br>Modelado y visualización: Juan L. Bretón, PMP | @juanlbreton"
+  ) +
+  theme_breton() +
+  theme(
+    legend.position = "bottom",
+    axis.line = element_blank(),
+    panel.grid = element_blank(),
+    title = element_text(size = 20)
+  ) 
+
+```
+
+### Resultados de los indicadores con mayor influencia
+
+Se presenta a continuación un panorama general de los resultados de los indicadores destacados en el párrafo anterior. Debe recordarse que cada indicador describe condiciones que hacen parte importante de la construcción de la competitividad.
+
+::: panel-tabset
+## PIB per cápita
+
+Solo la Ciudad de México y Nuevo León, estados con competitividad alta y media alta, obtienen los valores más altos en este indicador. Se observa, igualmente, que los estados con competividad muy baja, baja y media baja concentran, en general, los valores más pequeños de este indicador.
+
+Querétaro y Aguascalientes lideran al Gran Bajío en este indicador. Michoacán, a pesar de tener competitividad baja, tiene un mejor indicador que Zacatecas, con commpetitividad media baja.
+
+```{r}
+#| label: resultados de pib per capita
+#| fig-height: 7
+#| fig-cap: "Valor del indicador PIB per cápita para cada estado en el ICE 2025."
+
+# implementa función pib per capita
+plot_indicador_bajio(dataset = ice_25_01_gb, indica = pib_per_capita)
+
+# construye y completa gráfica
+plot_var +
+  scale_x_continuous(expand = expansion(mult = c(0.01, 0.05)),
+                     labels = scales::dollar_format()) +
+  labs(
+    title = paste(
+      "¿A cuánto asciende el PIB per cápita de cada estado?"
+    ),
+    subtitle = paste(
+      "Valor original del indicador.",
+      "Segmentación por membresía al Gran Bajío."
+    ),
+    x = "Pesos por habitante",
+    y = NULL,
+    caption = "Fuente: IMCO, Índice de Competitividad Estatal 2025. <br>
+       Modelado y visualización: Juan L. Bretón, PMP | @jluisbreton"
+  ) 
+```
+
+## Esperanza de Vida
+
+A pesar de que este indicador observa valores muy cercanos entre todos los estados, se destaca una tendencia que parece relacionar niveles más altos de competitividad con más años de esperanza de vida. Nuevo León y Baja California Sur superan 77.2 años. Chiapas tiene la esperanza de vida más baja del país con sólo 73 años. Destaca Jalisco que a pesar de tener una competitividad alta tiene una esperanza de vida similar a estados de competitividad media.
+
+Aguascalientes y Querétaro también lideran al Gran Bajío en esta condición. Michoacán hace eco a la tendencia nacional al ofrecer la menor esperanza de vida del Gran Bajío.
+
+```{r}
+#| label: resultados de esperanza de vida
+#| fig-height: 7
+#| fig-cap: "Valor del indicador Esperanza de Vida para cada estado en el ICE 2025."
+
+# implementa función esperanza de vida
+plot_indicador_bajio(dataset = ice_25_01_gb, indica = esperanza_de_vida)
+
+# construye y completa gráfica
+plot_var +
+  scale_x_continuous(expand = expansion(mult = c(0.01, 0.05))) +
+  labs(
+    title = paste(
+      "¿Cuántos años se espera que viva una persona en cada estado?"
+    ),
+    subtitle = paste(
+      "Valor original del indicador.",
+      "Segmentación por membresía al Gran Bajío."
+    ),
+    x = "Años",
+    y = NULL,
+    caption = "Fuente: IMCO, Índice de Competitividad Estatal 2025. <br>
+       Modelado y visualización: Juan L. Bretón, PMP | @jluisbreton"
+  ) 
+```
+
+## Ingreso promedio de los trabajadores
+
+Ciudad de México y Baja California Sur registran las mejores perspectivas de ingresos para sus trabajadores. Chiapas, única entidad con muy baja competitividad en el país, ofrece a sus trabajadores solo 43 centavos por cada peso que la Ciudad de México ofrece a los suyos.
+
+En el Gran Bajío los mejores ingresos se ubican en Aguascalientes y Querétaro. Los ingresos más bajos están, en cambio, en Guanajuato; estos ingresos resultan menores, incluso, que los que existen en estados como Tabasco.
+
+```{r}
+#| label: resultados de ingreso promedio 1
+#| fig-height: 7
+#| fig-cap: "Valor del indicador Ingreso Promedio de los Trabajadores de Tiempo Completo para cada estado en el ICE 2025."
+
+# implementa función ingreso promedio
+plot_indicador_bajio(
+  dataset = ice_25_01_gb, 
+  indica = ingreso_promedio_de_trabajadores_de_tiempo_completo
+)
+
+# construye y completa gráfica
+plot_var +
+  scale_x_continuous(expand = expansion(mult = c(0.01, 0.05)),
+                     labels = scales::dollar_format()) +
+  labs(
+    title = paste(
+      "¿Cuánto percibe un trabajador en cada estado?"
+    ),
+    subtitle = paste(
+      "Valor original del indicador.",
+      "Segmentación por membresía al Gran Bajío."
+    ),
+    x = "Ingreso medio por mes",
+    y = NULL,
+    caption = "Fuente: IMCO, Índice de Competitividad Estatal 2025. <br>
+       Modelado y visualización: Juan L. Bretón, PMP | @jluisbreton"
+  ) 
+```
+
+Agregados por membresía al Gran Bajío, los estados con alianza estratégica observan los ingresos más altos de todo el país. Los estados del Gran Bajío siguen en segundo sitio con un ingreso que resulta mucho más similar al que ofrecen las entidades que no tienen membresía con el Gran Bajío.
+
+```{r}
+#| label: resultados de ingreso promedio 2
+#| fig-cap: "Distribución de ingreso promedio de trabajadores en razón de su membresía al Gran Bajío."
+
+
+# gráfico de distribución
+gb_boot_ing_estimates |> 
+  ggplot(aes(x = estimate)) +
+  geom_rect(aes(x = median,
+                xmin = lo,
+                xmax = up,
+                ymin = 0,
+                ymax = Inf),
+            data = ing_medians,
+            fill = "steelblue",
+            alpha = 0.15) +
+  geom_rect(aes(x = median,
+                xmin = c25,
+                xmax = c75,
+                ymin = 0,
+                ymax = Inf),
+            data = ing_medians,
+            fill = "steelblue",
+            alpha = 0.35) +
+  geom_density(color = "grey45",
+               alpha = 0.35) +
+  geom_vline(aes(xintercept = median),
+             data = ing_medians,
+             color = "grey45") +
+  facet_grid(rows = vars(factor(term,
+                                levels = c("GRAN BAJIO",
+                                           "ALIADO ESTRATEGICO",
+                                           "SIN MEMBRESIA"))),
+             scales = "free",
+             switch = "y") +
+  scale_x_continuous(labels = scales::dollar_format()) +
+  theme_breton() +
+  theme(axis.text.y = element_text(size = 5.5)) +
+  labs(
+    title = paste(
+      "¿Cómo se distribuye el ingreso de los trabajadores?"
+    ),
+    subtitle = paste(
+      "Distribución estimada por membresía al Gran Bajío.",
+      "La cifra muestra el valor medio."
+    ),
+    x = "Ingreso medio por mes",
+    y = NULL,
+    caption = "Fuente: IMCO, Índice de Competitividad Estatal 2025. <br>
+       Modelado y visualización: Juan L. Bretón, PMP | @jluisbreton") ->
+  grafi_ing
+
+
+
+etiq_ing <- 
+  tibble(
+    term = c("GRAN BAJIO", "ALIADO ESTRATEGICO", "SIN MEMBRESIA"),
+    label = c((ing_medians[1, 4] |> pull()),
+              (ing_medians[2, 4] |> pull()),
+              (ing_medians[3, 4] |> pull()))
+  )
+
+
+grafi_ing +
+  geom_text(data = etiq_ing,
+            aes(x = Inf, 
+                y = Inf, 
+                label = scales::dollar(label, accuracy = 1)),
+            inherit.aes = FALSE,
+            vjust = 5.25,
+            hjust = 3.15,
+            family = "Encode Sans Condensed",
+            fontface = "bold",
+            size = 3.5,
+            color = "grey35")
+
+```
+
+## Informalidad laboral
+
+Oaxaca, Guerrero y Chiapas, entidades con competitividad baja o muy baja obtienen los valores más altos en esta condición con una media de 78 por ciento de su población económicamente activa. Coahuila y Nuevo León, por otro lado, registran la menor proporción de trabajadores en condición de informalidad con sólo 35 por ciento.
+
+Replicando la tendencia, Michoacán y Zacatecas observan la mayor proporción de informalidad laboral en el Gran Bajío, con un valor superior al 60 por ciento. Querétaro y Aguascalientes mantienen las tasas más bajas alrededor del 40 por ciento de la población económicamente activa.
+
+```{r}
+#| label: resultados de informalidad laboral
+#| fig-height: 7
+#| fig-cap: "Valor del indicador Informalidad Laboral para cada estado en el ICE 2025."
+
+
+# implementa función informalidad laboral
+plot_indicador_bajio(
+  dataset = ice_25_01_gb, 
+  indica = informalidad_laboral
+)
+
+# construye y completa gráfica
+plot_var +
+  scale_x_continuous(expand = expansion(mult = c(0.01, 0.05)),
+                     labels = scales::percent_format()) +
+  labs(
+    title = paste(
+      "¿Cuál es la proporción de informalidad laboral en cada estado?"
+    ),
+    subtitle = paste(
+      "Valor original del indicador.",
+      "Segmentación por membresía al Gran Bajío."
+    ),
+    x = "Porcentaje de la PEA en condición de informalidad",
+    y = NULL,
+    caption = "Fuente: IMCO, Índice de Competitividad Estatal 2025. <br>
+       Modelado y visualización: Juan L. Bretón, PMP | @jluisbreton"
+  ) 
+```
+
+## Complejidad económica en sectores de innovación
+
+Este indicador de las capacidades productivas de una entidad tiene a Nuevo León y a Querétaro como los líderes nacionales. Guerrero, Oaxaca y Chiapas están en el extremo opuesto con economías con potencial productivo cercano a 0.
+
+Además de Querétaro, en el Gran Bajío, Aguascalientes y Guanajuato observan los valores más altos del indicador. Los valores más bajos los registran los estados con las competitividades baja y media baja, Michoacán y Zacatecas, respectivamente.
+
+```{r}
+#| label: resultados de complejidad económica
+#| fig-height: 7
+#| fig-cap: "Valor del indicador Complejidad Económica en Sectores de Innovación para cada estado en el ICE 2025."
+
+
+# implementa función compejidad económica
+plot_indicador_bajio(
+  dataset = ice_25_01_gb, 
+  indica = complejidad_economica_en_sectores_de_innovacion
+)
+
+# construye y completa gráfica
+plot_var +
+  scale_x_continuous(expand = expansion(mult = c(0.01, 0.05))) +
+  labs(
+    title = paste(
+      "¿Qué tan compleja en innovación es la economía de cada estado?"
+    ),
+    subtitle = paste(
+      "Valor original del indicador.",
+      "Segmentación por membresía al Gran Bajío."
+    ),
+    x = "Valor normalizado (0 - 100)",
+    y = NULL,
+    caption = "Fuente: IMCO, Índice de Competitividad Estatal 2025. <br>
+       Modelado y visualización: Juan L. Bretón, PMP | @jluisbreton"
+  ) 
+```
+:::
+
+## Perspectivas de los Estados del Gran Bajío
+
+Se presentan, en esta sección, las 3 condiciones que representan las mejores oportunidades para la competitividad de los estados de la región del Gran Bajío. Igualmente, se presentan las 3 condiciones que significan los mayores retos para la competitividad de estas mismas entidades.
+
+### Aguascalientes
+
+```{r}
+#| label: fortaleza aguascalientes
+
+# mejores
+rank_pregunta |> 
+  filter(entidad %in% "AGUASCALIENTES") |>
+  arrange(valor) |> 
+  select(indicador, posicion = valor) |> 
+  mutate(posicion = 1 - posicion) |> 
+  slice_head(n = 3) |> 
+  gt() |> 
+  cols_label(indicador = "Indicador",
+             posicion = "Percentil") |> 
+  fmt_percent(columns = posicion, decimals = 2) |> 
+  tab_header(
+    title = "Condiciones que representan fortalezas para la competitividad de la entidad",
+    subtitle = "Se muestra la proporción de entidades por debajo del estado referido"
+  ) |> 
+  tab_source_note(source_note = html(
+    "Fuente: IMCO, Índice de Competitividad Estatal 2025. <br>
+  Modelado y visualización: Juan L. Bretón, PMP" 
+  ))
+  
+```
+
+```{r}
+#| label: reto aguascalientes
+
+# peores
+rank_pregunta |> 
+  filter(entidad %in% "AGUASCALIENTES") |>
+  arrange(desc(valor)) |> 
+  select(indicador, posicion = valor) |> 
+  mutate(posicion = 1 - posicion) |> 
+  slice_head(n = 3) |> 
+  gt() |> 
+  cols_label(indicador = "Indicador",
+             posicion = "Percentil") |> 
+  fmt_percent(columns = posicion, decimals = 2) |> 
+  tab_header(
+    title = "Condiciones que representan retos para la competitividad de la entidad",
+    subtitle = "Se muestra la proporción de entidades por debajo del estado referido"
+  ) |> 
+  tab_source_note(source_note = html(
+    "Fuente: IMCO, Índice de Competitividad Estatal 2025. <br>
+  Modelado y visualización: Juan L. Bretón, PMP" 
+  ))
+  
+```
+
+### Guanajuato
+
+```{r}
+#| label: fortaleza guanajuato
+
+# mejores
+rank_pregunta |> 
+  filter(entidad %in% "GUANAJUATO") |>
+  arrange(valor) |> 
+  select(indicador, posicion = valor) |> 
+  mutate(posicion = 1 - posicion) |> 
+  slice_head(n = 3) |> 
+  gt() |> 
+  cols_label(indicador = "Indicador",
+             posicion = "Percentil") |> 
+  fmt_percent(columns = posicion, decimals = 2) |> 
+  tab_header(
+    title = "Condiciones que representan fortalezas para la competitividad de la entidad",
+    subtitle = "Se muestra la proporción de entidades por debajo del estado referido"
+  ) |> 
+  tab_source_note(source_note = html(
+    "Fuente: IMCO, Índice de Competitividad Estatal 2025. <br>
+  Modelado y visualización: Juan L. Bretón, PMP" 
+  ))
+  
+```
+
+```{r}
+#| label: reto guanjuato
+
+# peores
+rank_pregunta |> 
+  filter(entidad %in% "GUANAJUATO") |>
+  arrange(desc(valor)) |> 
+  select(indicador, posicion = valor) |> 
+  mutate(posicion = 1 - posicion) |> 
+  slice_head(n = 3) |> 
+  gt() |> 
+  cols_label(indicador = "Indicador",
+             posicion = "Percentil") |> 
+  fmt_percent(columns = posicion, decimals = 2) |> 
+  tab_header(
+    title = "Condiciones que representan retos para la competitividad de la entidad",
+    subtitle = "Se muestra la proporción de entidades por debajo del estado referido"
+  ) |> 
+  tab_source_note(source_note = html(
+    "Fuente: IMCO, Índice de Competitividad Estatal 2025. <br>
+  Modelado y visualización: Juan L. Bretón, PMP" 
+  ))
+  
+```
+
+### Querétaro
+
+```{r}
+#| label: fortaleza queretaro
+
+# mejores
+rank_pregunta |> 
+  filter(entidad %in% "QUERETARO") |>
+  arrange(valor) |> 
+  select(indicador, posicion = valor) |> 
+  mutate(posicion = 1 - posicion) |> 
+  slice_head(n = 3) |> 
+  gt() |> 
+  cols_label(indicador = "Indicador",
+             posicion = "Percentil") |> 
+  fmt_percent(columns = posicion, decimals = 2) |> 
+  tab_header(
+    title = "Condiciones que representan fortalezas para la competitividad de la entidad",
+    subtitle = "Se muestra la proporción de entidades por debajo del estado referido"
+  ) |> 
+  tab_source_note(source_note = html(
+    "Fuente: IMCO, Índice de Competitividad Estatal 2025. <br>
+  Modelado y visualización: Juan L. Bretón, PMP" 
+  ))
+  
+```
+
+```{r}
+#| label: reto queretaro
+
+# peores
+rank_pregunta |> 
+  filter(entidad %in% "QUERETARO") |>
+  arrange(desc(valor)) |> 
+  select(indicador, posicion = valor) |> 
+  mutate(posicion = 1 - posicion) |> 
+  slice_head(n = 3) |> 
+  gt() |> 
+  cols_label(indicador = "Indicador",
+             posicion = "Percentil") |> 
+  fmt_percent(columns = posicion, decimals = 2) |> 
+  tab_header(
+    title = "Condiciones que representan retos para la competitividad de la entidad",
+    subtitle = "Se muestra la proporción de entidades por debajo del estado referido"
+  ) |> 
+  tab_source_note(source_note = html(
+    "Fuente: IMCO, Índice de Competitividad Estatal 2025. <br>
+  Modelado y visualización: Juan L. Bretón, PMP" 
+  ))
+  
+```
+
+### San Luis Potosí
+
+```{r}
+#| label: fortaleza san luis
+
+# mejores
+rank_pregunta |> 
+  filter(entidad %in% "SAN LUIS POTOSI") |>
+  arrange(valor) |> 
+  select(indicador, posicion = valor) |> 
+  mutate(posicion = 1 - posicion) |> 
+  slice_head(n = 3) |> 
+  gt() |> 
+  cols_label(indicador = "Indicador",
+             posicion = "Percentil") |> 
+  fmt_percent(columns = posicion, decimals = 2) |> 
+  tab_header(
+    title = "Condiciones que representan fortalezas para la competitividad de la entidad",
+    subtitle = "Se muestra la proporción de entidades por debajo del estado referido"
+  ) |> 
+  tab_source_note(source_note = html(
+    "Fuente: IMCO, Índice de Competitividad Estatal 2025. <br>
+  Modelado y visualización: Juan L. Bretón, PMP" 
+  ))
+  
+```
+
+```{r}
+#| label: reto san luis
+
+# peores
+rank_pregunta |> 
+  filter(entidad %in% "SAN LUIS POTOSI") |>
+  arrange(desc(valor)) |> 
+  select(indicador, posicion = valor) |> 
+  mutate(posicion = 1 - posicion) |> 
+  slice_head(n = 3) |> 
+  gt() |> 
+  cols_label(indicador = "Indicador",
+             posicion = "Percentil") |> 
+  fmt_percent(columns = posicion, decimals = 2) |> 
+  tab_header(
+    title = "Condiciones que representan retos para la competitividad de la entidad",
+    subtitle = "Se muestra la proporción de entidades por debajo del estado referido"
+  ) |> 
+  tab_source_note(source_note = html(
+    "Fuente: IMCO, Índice de Competitividad Estatal 2025. <br>
+  Modelado y visualización: Juan L. Bretón, PMP" 
+  ))
+  
+```
+
+### Michoacán
+
+```{r}
+#| label: fortaleza michoacan
+
+# mejores
+rank_pregunta |> 
+  filter(entidad %in% "MICHOACAN") |>
+  arrange(valor) |> 
+  select(indicador, posicion = valor) |> 
+  mutate(posicion = 1 - posicion) |> 
+  slice_head(n = 3) |> 
+  gt() |> 
+  cols_label(indicador = "Indicador",
+             posicion = "Percentil") |> 
+  fmt_percent(columns = posicion, decimals = 2) |> 
+  tab_header(
+    title = "Condiciones que representan fortalezas para la competitividad de la entidad",
+    subtitle = "Se muestra la proporción de entidades por debajo del estado referido"
+  ) |> 
+  tab_source_note(source_note = html(
+    "Fuente: IMCO, Índice de Competitividad Estatal 2025. <br>
+  Modelado y visualización: Juan L. Bretón, PMP" 
+  ))
+  
+```
+
+```{r}
+#| label: reto michoacan
+
+# peores
+rank_pregunta |> 
+  filter(entidad %in% "MICHOACAN") |>
+  arrange(desc(valor)) |> 
+  select(indicador, posicion = valor) |> 
+  mutate(posicion = 1 - posicion) |> 
+  slice_head(n = 3) |> 
+  gt() |> 
+  cols_label(indicador = "Indicador",
+             posicion = "Percentil") |> 
+  fmt_percent(columns = posicion, decimals = 2) |> 
+  tab_header(
+    title = "Condiciones que representan retos para la competitividad de la entidad",
+    subtitle = "Se muestra la proporción de entidades por debajo del estado referido"
+  ) |> 
+  tab_source_note(source_note = html(
+    "Fuente: IMCO, Índice de Competitividad Estatal 2025. <br>
+  Modelado y visualización: Juan L. Bretón, PMP" 
+  ))
+  
+```
+
+### Zacatecas
+
+```{r}
+#| label: fortaleza zacatecas
+
+# mejores
+rank_pregunta |> 
+  filter(entidad %in% "ZACATECAS") |>
+  arrange(valor) |> 
+  select(indicador, posicion = valor) |> 
+  mutate(posicion = 1 - posicion) |> 
+  slice_head(n = 3) |> 
+  gt() |> 
+  cols_label(indicador = "Indicador",
+             posicion = "Percentil") |> 
+  fmt_percent(columns = posicion, decimals = 2) |> 
+  tab_header(
+    title = "Condiciones que representan fortalezas para la competitividad de la entidad",
+    subtitle = "Se muestra la proporción de entidades por debajo del estado referido"
+  ) |> 
+  tab_source_note(source_note = html(
+    "Fuente: IMCO, Índice de Competitividad Estatal 2025. <br>
+  Modelado y visualización: Juan L. Bretón, PMP" 
+  ))
+  
+```
+
+```{r}
+#| label: reto zacatecas
+
+# peores
+rank_pregunta |> 
+  filter(entidad %in% "ZACATECAS") |>
+  arrange(desc(valor)) |> 
+  select(indicador, posicion = valor) |> 
+  mutate(posicion = 1 - posicion) |> 
+  slice_head(n = 3) |> 
+  gt() |> 
+  cols_label(indicador = "Indicador",
+             posicion = "Percentil") |> 
+  fmt_percent(columns = posicion, decimals = 2) |> 
+  tab_header(
+    title = "Condiciones que representan retos para la competitividad de la entidad",
+    subtitle = "Se muestra la proporción de entidades por debajo del estado referido"
+  ) |> 
+  tab_source_note(source_note = html(
+    "Fuente: IMCO, Índice de Competitividad Estatal 2025. <br>
+  Modelado y visualización: Juan L. Bretón, PMP" 
+  ))
+  
+```
+
+## Conclusiones
+
+La región del Gran Bajío (Aguascalientes, Guanajuato, Querétaro, San Luis Potosí, Zacatecas y Michoacán) muestra un perfil competitivo diferenciado que cuenta con fortalezas clave que pueden ser apalancadas estratégicamente mediante colaboración regional. En condiciones clave para el fomento a la competitividad, como aquellas relacionadas con la innovación, actividad económica formal, la participación de mujeres en la economía o la gobernanza ambiental, varios estados de la región se destacan entre los mejores del país.
+
+Por ejemplo, Querétaro lidera en complejidad económica en sectores de innovación, mientras Guanajuato muestra dinamismo en la creación de grandes unidades económicas y en el registro de patentes. Aguascalientes sobresale en tratamiento de aguas residuales y baja mortalidad infantil, lo cual habla de capacidad institucional y servicios públicos efectivos. San Luis Potosí, a su vez, destaca en exportaciones y en la adopción de medios de pago electrónicos, una señal de modernización del comercio. Michoacán y Zacatecas, a pesar de sus rezagos en otros ámbitos, tienen indicadores positivos en equidad laboral de género y en el crecimiento empresarial formal.
+
+Sin embargo, estas fortalezas no se encuentran distribuidas de manera uniforme, lo que representa una oportunidad clara de articulación regional. La complementariedad de los estados del Gran Bajío se revela como una potencial ventaja competitiva adicional: Querétaro como polo de innovación, Guanajuato como motor manufacturero con base tecnológica, Aguascalientes como referencia en servicios públicos eficientes, San Luis como plataforma logística y exportadora, y Zacatecas con un potencial de expansión empresarial formal aún por consolidar.
+
+La región del Gran Bajío enfrenta, igualmente, retos muy serios que amenazan su competitividad futura. La seguridad aparece como una vulnerabilidad transversal: Guanajuato presenta una de las peores posiciones en percepción de seguridad, Aguascalientes en incidencia delictiva, y Querétaro en robo de vehículos. Estas condiciones erosionan la calidad de vida de las personas y su confianza en las instituciones que norman la vida en sociedad. Preocupan, igualmente, las debilidades sistémicas en salud pública: Zacatecas y San Luis tienen baja cobertura de personal médico, mientras que Michoacán presenta una alta morbilidad por enfermedades respiratorias.
+
+En el plano económico y financiero, hay señales de rezago en la digitalización financiera (bajo uso de banca móvil en Guanajuato y Zacatecas), y en inversión extranjera directa (especialmente en Michoacán). La brecha de ingresos por género en Querétaro, y las jornadas laborales extensas en Aguascalientes, señalan la necesidad de fortalecer la equidad laboral más allá de la mera participación de las mujeres en la economía productiva.
+
+Algunos indicadores revelan tensiones institucionales. Guanajuato ocupa la peor posición en consulta pública de información financiera, lo que puede sugerir espacios de opacidad presupuestal, y San Luis Potosí aparece como uno de los estados con más agresiones a periodistas, lo que compromete la libertad de expresión y el escrutinio público.
+
+El Gran Bajío es una región con activos competitivos estratégicos relevantes, pero también con vulnerabilidades que no pueden pasarse por alto. Convertir la diversidad de condiciones de la región en una palanca impulsora de competitividad dependerá, en mucho, de su capacidad para coordinar esfuerzos, para compartir buenas prácticas y para diseñar políticas públicas con enfoque regional. Una visión compartida constituye el vehículo más eficiente para consolidar al Gran Bajío como un bloque competitivo, resiliente y sostenible en el largo plazo que, al final de cuentas, pueda ofrecer un buen lugar para la vida humana plena, en donde ésta tenga oportunidades reales de desarrollo y florecimiento.
+

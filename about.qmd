@@ -1,0 +1,16 @@
+---
+title: "Juan L. Bretón, PMP"
+about:
+  template: jolla
+  image: images/jlbe_eva.jpeg
+  links:
+    - text: LinkedIn
+      icon: linkedin
+      href: https://www.linkedin.com/in/juanlbreton/ 
+    - text: GitHub
+      icon: github
+      href: https://github.com/juanlbreton
+---
+
+
+Practicante de la Ciencia de Datos. Apasionado por el conocimiento.        Promovente de la Inteligencia de Decisiones.
