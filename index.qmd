@@ -102,12 +102,20 @@ ice_25_01_gb |>
 
 ### Existen dos bloques de competitividad estatal
 
-Aun cuando el diseño del Índice describe seis niveles de competitividad, un análisis de los patrones de desempeño general de los 32 estados revela una división clara del país en dos grandes bloques generales, aquellos estados que concentran mejores condiciones de competitividad (competitividad alta) y las entidades que enfrentan dificultades generalizadas para la competitividad (competitividad baja).
+```{r}
+#| label: carga grafica dbscan
+
+load("data/gb_dbscan.RData")
+```
+
+
+Aun cuando el diseño del Índice describe seis niveles de competitividad, un análisis elemental de los patrones de desempeño general de los 32 estados revela una división clara del país en dos grandes bloques generales, a saber, aquellos estados que concentran mejores condiciones de competitividad (competitividad alta) y aquellas otras entidades que enfrentan dificultades generalizadas para su competitividad (competitividad baja).
+
 
 ```{r}
 #| label: gráfica umap
 #| fig-height: 7
-#| fig-cap: "Atendiendo al desempeño general, se pueden identificar dos grandes bloques de estados."
+#| fig-cap: "Atendiendo al desempeño general de la competitividad, se pueden identificar dos grandes bloques de estados."
 
 # gráfica de grupos de estados
 res_umap |> 
@@ -145,7 +153,7 @@ res_umap |>
   theme(legend.position = "top") 
 ```
 
-Hay estados a los que el ICE 2025 clasifica como de competitividad media alta, tales como Guanajuato o Hidalgo, que se ubican, por su desempeño general, en el bloque de los estados de competitividad baja. En el mismo sentido, hay estados a los que el ICE 2025 clasifica como de competitividad media baja, tales como Quintana Roo o Colima, que alcanzan, igualmente por su desempeño general, a integrarse al bloque de estados de competitividad alta. Esto habla de la complejidad fundamental que entraña la medición del desempeño de los estados.
+Es relavante destacar que algunos estados que el ICE 2025 clasifica como de competitividad media alta, como Guanajuato o Hidalgo, se ubican, con base en su desempeño general, en el bloque de los estados de competitividad baja. En el sentido opuesto, estados que el ICE 2025 clasifica como de competitividad media baja, como Quintana Roo o Colima, alcanzan, igualmente con base en su desempeño general, a integrarse al bloque de estados de competitividad alta. Esta disonancia no significa que haya deficiencias en la metodología del ICE; más bien habla, en principio, de la complejidad fundamental que entraña la medición del desempeño general de los estados, especialmente en los niveles de competitividad media.
 
 ## Condiciones Más Relevantes para la Competitividad
 
@@ -250,7 +258,7 @@ ggraph(lay) +
     legend.position = "bottom",
     axis.line = element_blank(),
     panel.grid = element_blank(),
-    title = element_text(size = 20)
+    title = element_text(size = rel(2.6))
   ) 
 
 ```
