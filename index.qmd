@@ -2,7 +2,7 @@
 title: "Los Estados del Gran Bajío"
 subtitle: "En el Índice de Competitividad Estatal 2025 del IMCO"
 author: "Juan L. Bretón, PMP"
-date: "15 julio, 2025"
+date: "`r Sys.Date()`"
 favicon: images/fabi_jlbe_eva.jpeg
 ---
 
@@ -56,7 +56,7 @@ load("data/carga_gb.RData")
 De acuerdo con su nivel de competitividad, los estados de la República se ordenan, en la edición 2025 del Índice de Competitividad Estatal del IMCO, de la forma que se muestra en la gráfica siguiente.
 
 ::: column-margin
-Los estados del Gran Bajío alcanzaron, en su mayoría, niveles de competitividad media alta; en su caso, Zacatecas y Michoacán alcanzaron niveles media baja y baja, respectivamente.
+Los estados del Gran Bajío alcanzaron en el ICE 2025, en su mayoría, niveles de competitividad media alta; en su caso, los estados de Zacatecas y Michoacán alcanzaron niveles media baja y baja, respectivamente.
 :::
 
 ```{r}
@@ -109,7 +109,7 @@ load("data/gb_dbscan.RData")
 ```
 
 
-Aun cuando el diseño del Índice describe seis niveles de competitividad, un análisis elemental de los patrones de desempeño general de los 32 estados revela una división clara del país en dos grandes bloques generales, a saber, aquellos estados que concentran mejores condiciones de competitividad (competitividad alta) y aquellas otras entidades que enfrentan dificultades generalizadas para su competitividad (competitividad baja).
+Aun cuando el diseño del Índice describe seis niveles de competitividad, un análisis elemental de los patrones de desempeño general de los 32 estados revela una división clara del país en dos grandes conjuntos generales, a saber, aquellos estados que concentran mejores condiciones para competir (competitividad alta) y aquellas otras entidades que enfrentan dificultades y rezagos generalizados (competitividad baja).
 
 
 ```{r}
@@ -162,7 +162,7 @@ Si bien el diseño del ICE 2025 no establece con puntualidad una distinción en 
 Un análisis de la asociación entre los indicadores del Índice destaca, precisamente, algunas de las condiciones que tienen mayor influencia en la competitividad de una entidad federativa. Entre éstas se pueden incluir el PIB Per Cápita, la Esperanza de Vida, el Ingreso Promedio de los Trabajadores de Tiempo Completo, la Informalidad Laboral y la Complejidad Económica en Sectores de Innovación.
 
 ::: column-margin
-El análisis de las características de la asociación entre variables permite descubrir patrones y conexiones significativas en forma de una red, lo que sirve para identificar las variables que tienen mayor influencia.
+El análisis de las características de la asociación entre variables permite revelar patrones y conexiones significativas en forma de una red, lo que es útil para destacar las variables que tienen mayor influencia.
 :::
 
 ```{r}
