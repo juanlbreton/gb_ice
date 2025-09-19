@@ -171,7 +171,7 @@ El análisis de las características de la asociación entre variables permite r
 
 ```{r}
 #| label: análisis de red
-#| fig-width: 18
+#| fig-width: 19
 #| fig-height: 16
 #| fig-cap: "Indicadores del ICE 2025 que resultan más relevantes para la competitivdad de los estados."
 
@@ -187,8 +187,6 @@ lay <-
 
 # Plot
 ggraph(lay) +
-  
-  # Aristas
   geom_edge_arc(aes(
     alpha = abs(r),
     width = abs(r),
@@ -196,15 +194,11 @@ ggraph(lay) +
   ), 
   strength = 0.3,
   show.legend = c(edge_alpha = FALSE)) +
-  
-  # Nodos
   geom_node_point(aes(
     size = eigenvector, 
     color = subindice,
     alpha = betwe
   )) +
-  
-  # Etiquetas repel
   geom_node_label(aes(
     label = name,
     fontface = "bold"
@@ -214,21 +208,19 @@ ggraph(lay) +
   size = 4.85,
   color = "grey5",
   vjust = 1.25,
-  force = 5,        # fuerza de separación
+  force = 6,       
   max.overlaps = 10,
   seed = 42,
   alpha = 0.7,
-  label.size = 0.01
+  label.size = 0.01,
+  segment.min = 15
   ) +
-  
-  # Escalas y leyendas
   scale_edge_color_manual(values = c("negativo" = "#660712", 
                                      "positivo" = "#035824"),
                           name   = "Sentido de la asociación",
                           labels = c("Inversa", "Directa")) +
   scale_edge_alpha_continuous(range = c(0.25, 0.75)) +
   scale_edge_width_continuous(range = c(0.3, 2.5)) +
-  
   scale_color_manual(values = c(
     "Derecho" = "#8B0000",
     "Infraestructura" = "#1F77B4",
@@ -244,8 +236,6 @@ ggraph(lay) +
   
   scale_alpha_continuous(range = c(0.65, 1),
                          name = "Intermediación") +
-  
-  # Títulos y tema
   labs(
     title = 
       paste("¿Cuáles son las condiciones más relavantes",
