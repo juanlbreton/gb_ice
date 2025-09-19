@@ -4,6 +4,8 @@ subtitle: "En el Índice de Competitividad Estatal 2025 del IMCO"
 author: "Juan L. Bretón, PMP"
 date: "`r Sys.Date()`"
 favicon: images/fabi_jlbe_eva.jpeg
+editor_options: 
+  chunk_output_type: console
 ---
 
 ## El Índice de Competitividad Estatal
@@ -93,10 +95,11 @@ ice_25_01_gb |>
                     name = "Nivel de Competitividad") +
   scale_color_manual(values = color_gb,
                      name = "Gran Bajío") +
-  theme_breton() +
+  theme_breton(base_size = 10) +
   theme(legend.position = "top",
         axis.text = element_blank(),
-        axis.ticks = element_blank()) +
+        axis.ticks = element_blank(),
+        axis.line = element_blank()) +
   guides(color = guide_legend(title.vjust = -0.5))
 ```
 
@@ -115,6 +118,7 @@ Aun cuando el diseño del Índice describe seis niveles de competitividad, un an
 ```{r}
 #| label: gráfica umap
 #| fig-height: 7
+#| fig-width: 9
 #| fig-cap: "Atendiendo al desempeño general de la competitividad, se pueden identificar dos grandes bloques de estados."
 
 # gráfica de grupos de estados
@@ -149,7 +153,7 @@ res_umap |>
        y = "UMAP 2",
        caption = "Funte: IMCO. Índice de Competitivad Estatal 2025.
        <br> Modelado y visualización: Juan L. Bretón, PMP | @juanlbreton") +
-  theme_breton() +
+  theme_breton(base_size = 10) +
   theme(legend.position = "top") 
 ```
 
@@ -167,8 +171,8 @@ El análisis de las características de la asociación entre variables permite r
 
 ```{r}
 #| label: análisis de red
-#| fig-width: 22
-#| fig-height: 18
+#| fig-width: 18
+#| fig-height: 16
 #| fig-cap: "Indicadores del ICE 2025 que resultan más relevantes para la competitivdad de los estados."
 
 
@@ -210,7 +214,7 @@ ggraph(lay) +
   size = 4.85,
   color = "grey5",
   vjust = 1.25,
-  force = 4,        # fuerza de separación
+  force = 5,        # fuerza de separación
   max.overlaps = 10,
   seed = 42,
   alpha = 0.7,
@@ -253,13 +257,18 @@ ggraph(lay) +
     caption = "Fuente: IMCO, Índice de Competitividad Estatal 2025.
     <br>Modelado y visualización: Juan L. Bretón, PMP | @juanlbreton"
   ) +
-  theme_breton() +
+  theme_breton(base_size = 18) +
   theme(
     legend.position = "bottom",
     axis.line = element_blank(),
-    panel.grid = element_blank(),
-    title = element_text(size = rel(2.6))
-  ) 
+    panel.grid = element_blank()
+  ) +
+  guides(
+    color       = guide_legend(nrow = 2, byrow = TRUE),
+    size        = guide_legend(nrow = 2, byrow = TRUE),
+    alpha       = guide_legend(nrow = 2, byrow = TRUE),
+    edge_color  = guide_legend(nrow = 2, byrow = TRUE)
+  )
 
 ```
 
@@ -277,6 +286,7 @@ Querétaro y Aguascalientes lideran al Gran Bajío en este indicador. Michoacán
 ```{r}
 #| label: resultados de pib per capita
 #| fig-height: 7
+#| fig-width: 9
 #| fig-cap: "Valor del indicador PIB per cápita para cada estado en el ICE 2025."
 
 # implementa función pib per capita
@@ -298,7 +308,8 @@ plot_var +
     y = NULL,
     caption = "Fuente: IMCO, Índice de Competitividad Estatal 2025. <br>
        Modelado y visualización: Juan L. Bretón, PMP | @jluisbreton"
-  ) 
+  ) +
+  theme_breton(base_size = 10)
 ```
 
 ## Esperanza de Vida
@@ -310,6 +321,7 @@ Aguascalientes y Querétaro también lideran al Gran Bajío en esta condición. 
 ```{r}
 #| label: resultados de esperanza de vida
 #| fig-height: 7
+#| fig-width: 9
 #| fig-cap: "Valor del indicador Esperanza de Vida para cada estado en el ICE 2025."
 
 # implementa función esperanza de vida
@@ -330,7 +342,8 @@ plot_var +
     y = NULL,
     caption = "Fuente: IMCO, Índice de Competitividad Estatal 2025. <br>
        Modelado y visualización: Juan L. Bretón, PMP | @jluisbreton"
-  ) 
+  ) +
+  theme_breton(base_size = 10)
 ```
 
 ## Ingreso promedio de los trabajadores
@@ -342,6 +355,7 @@ En el Gran Bajío los mejores ingresos se ubican en Aguascalientes y Querétaro.
 ```{r}
 #| label: resultados de ingreso promedio 1
 #| fig-height: 7
+#| fig-width: 9
 #| fig-cap: "Valor del indicador Ingreso Promedio de los Trabajadores de Tiempo Completo para cada estado en el ICE 2025."
 
 # implementa función ingreso promedio
@@ -366,13 +380,16 @@ plot_var +
     y = NULL,
     caption = "Fuente: IMCO, Índice de Competitividad Estatal 2025. <br>
        Modelado y visualización: Juan L. Bretón, PMP | @jluisbreton"
-  ) 
+  ) +
+  theme_breton(base_size = 10)
 ```
 
 Agregados por membresía al Gran Bajío, los estados con alianza estratégica observan los ingresos más altos de todo el país. Los estados del Gran Bajío siguen en segundo sitio con un ingreso que resulta mucho más similar al que ofrecen las entidades que no tienen membresía con el Gran Bajío.
 
 ```{r}
 #| label: resultados de ingreso promedio 2
+#| fig-height: 7
+#| fig-width: 9
 #| fig-cap: "Distribución de ingreso promedio de trabajadores en razón de su membresía al Gran Bajío."
 
 
@@ -407,7 +424,7 @@ gb_boot_ing_estimates |>
              scales = "free",
              switch = "y") +
   scale_x_continuous(labels = scales::dollar_format()) +
-  theme_breton() +
+  theme_breton(base_size = 10) +
   theme(axis.text.y = element_text(size = 5.5)) +
   labs(
     title = paste(
@@ -458,6 +475,7 @@ Replicando la tendencia, Michoacán y Zacatecas observan la mayor proporción de
 ```{r}
 #| label: resultados de informalidad laboral
 #| fig-height: 7
+#| fig-width: 9
 #| fig-cap: "Valor del indicador Informalidad Laboral para cada estado en el ICE 2025."
 
 
@@ -483,7 +501,8 @@ plot_var +
     y = NULL,
     caption = "Fuente: IMCO, Índice de Competitividad Estatal 2025. <br>
        Modelado y visualización: Juan L. Bretón, PMP | @jluisbreton"
-  ) 
+  ) +
+  theme_breton(base_size = 10)
 ```
 
 ## Complejidad económica en sectores de innovación
@@ -495,6 +514,7 @@ Además de Querétaro, en el Gran Bajío, Aguascalientes y Guanajuato observan l
 ```{r}
 #| label: resultados de complejidad económica
 #| fig-height: 7
+#| fig-width: 9
 #| fig-cap: "Valor del indicador Complejidad Económica en Sectores de Innovación para cada estado en el ICE 2025."
 
 
@@ -519,7 +539,8 @@ plot_var +
     y = NULL,
     caption = "Fuente: IMCO, Índice de Competitividad Estatal 2025. <br>
        Modelado y visualización: Juan L. Bretón, PMP | @jluisbreton"
-  ) 
+  ) +
+  theme_breton(base_size = 10)
 ```
 :::
 

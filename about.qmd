@@ -4,9 +4,9 @@ about:
   template: jolla
   image: images/jlbe_eva.jpeg
   links:
-    - text: LinkedIn
-      icon: linkedin
-      href: https://www.linkedin.com/in/juanlbreton/ 
+    # - text: LinkedIn
+    #   icon: linkedin
+    #   href: https://www.linkedin.com/in/juanlbreton/ 
     - text: GitHub
       icon: github
       href: https://github.com/juanlbreton
